@@ -2,6 +2,7 @@
 // https://github.com/ihormelnyk/arduino_opentherm_controller
 // http://ihormelnyk.com/Content/Pages/arduino_opentherm_controller/Opentherm%20Protocol%20v2-2.pdf
 // http://otgw.tclcode.com/schematic.html
+// https://www.domoticaforum.eu/viewforum.php?f=75
 
 // set according to own wiring
 const int OT_IN_PIN = 19;
@@ -130,6 +131,10 @@ OTMessage messages[MESSAGES_COUNT] = {
   {(DataId)127, DIR_READ, "Slave-version", DT_U8, "Slave product version number and type"}
 };
 
+uint8_t status_activate_CH = 0x1;
+uint8_t status_activate_DHW = 0x2;
+uint16_t status_activate_CH_DHW = (status_activate_CH | status_activate_DHW) << 8;
+
 // checks if value has even parity
 int hasEvenParity(unsigned int x)
 {
@@ -211,9 +216,7 @@ void setActiveState() {
 void activateBoiler() {
   setIdleState();
   delay(1000);
-  // TODO:
-  // don't know proper values so far
-  readId(0, 31);
+  //readId(0, value);
 }
 
 void sendBit(bool high) {
