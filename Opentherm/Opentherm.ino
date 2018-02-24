@@ -1,13 +1,20 @@
-//https://github.com/ihormelnyk/arduino_opentherm_controller
-//http://ihormelnyk.com/Content/Pages/arduino_opentherm_controller/Opentherm%20Protocol%20v2-2.pdf
-//http://otgw.tclcode.com/schematic.html
+// Usefull links:
+// https://github.com/ihormelnyk/arduino_opentherm_controller
+// http://ihormelnyk.com/Content/Pages/arduino_opentherm_controller/Opentherm%20Protocol%20v2-2.pdf
+// http://otgw.tclcode.com/schematic.html
 
-const int OT_IN_PIN = 19; //3 //Arduino UNO
-const int OT_OUT_PIN = 18; //2 //Arduino UNO
+// set according to own wiring
+const int OT_IN_PIN = 19;
+const int OT_OUT_PIN = 18;
 const unsigned int bitPeriod = 1000; //1020 //microseconds, 1ms -10%+15%
 
-String inputString = "";         // a string to hold incoming serial data
+// a string to hold incoming serial data
+String inputString = "";
 
+// serial input delimiter
+const char delimiter = ' ';
+
+// message types sent to boiler
 enum MasterToSlaveMsgType : byte
 {
   READ_DATA = 0,
@@ -16,6 +23,7 @@ enum MasterToSlaveMsgType : byte
   RESERVED = 3
 };
 
+// message types received from boiler
 enum SlaveToMasterMsgType : byte
 {
   READ_ACK = 4,
@@ -24,6 +32,7 @@ enum SlaveToMasterMsgType : byte
   UNKNOWN_DATAID = 7
 };
 
+// message direction
 enum DataIdDirection : byte
 {
   DIR_READ,
@@ -31,6 +40,7 @@ enum DataIdDirection : byte
   DIR_BOTH
 };
 
+// message data type
 enum DataType : byte
 {
   DT_FLAG8,
@@ -41,14 +51,18 @@ enum DataType : byte
   DT_S16
 };
 
+
 enum DataId : byte
 {
   R_STATUS          = 0,
   W_TSET            = 1,
   R_TBOILER         = 25
+                      // to be extended if usefull
 };
 
 #define MESSAGES_COUNT 54
+
+// message definition
 typedef struct
 {
   DataId dataId;
@@ -58,6 +72,7 @@ typedef struct
   char description[100];
 } OTMessage;
 
+// messages data
 OTMessage messages[MESSAGES_COUNT] = {
   {(DataId)0, DIR_READ, "Status", DT_FLAG8, "Master and Slave Status flags."},
   {(DataId)1, DIR_WRITE, "TSet", DT_F88, "Control setpoint ie CH water temperature setpoint (°C) "},
@@ -115,6 +130,7 @@ OTMessage messages[MESSAGES_COUNT] = {
   {(DataId)127, DIR_READ, "Slave-version", DT_U8, "Slave product version number and type"}
 };
 
+// checks if value has even parity
 int hasEvenParity(unsigned int x)
 {
   x ^= x >> 16;
@@ -125,6 +141,7 @@ int hasEvenParity(unsigned int x)
   return (~x) & 1;
 }
 
+// converts float to uint16
 uint16_t toF88(float f)
 {
   uint16_t result = 0;
@@ -139,6 +156,7 @@ uint16_t toF88(float f)
   return result;
 }
 
+// converts uint16 to float
 float fromF88(uint16_t b)
 {
   if (b & 0x8000) // sign bit
@@ -153,7 +171,7 @@ float fromF88(uint16_t b)
 
 //P MGS-TYPE SPARE DATA-ID  DATA-VALUE
 //0 000      0000  00000000 00000000 00000000
-
+// builds message from msg type, data id and value to uint32=unsigned long
 unsigned long buildRequest(MasterToSlaveMsgType msgType, DataId dataId, uint16_t dataValue)
 {
   //These bits are unused in this release of the protocol. They should always be ‘0’.
@@ -167,27 +185,33 @@ unsigned long buildRequest(MasterToSlaveMsgType msgType, DataId dataId, uint16_t
   return request;
 }
 
+// builds read request
 unsigned long buildReadRequest(DataId dataId, uint16_t v)
 {
   return buildRequest(READ_DATA, dataId, v);
 }
 
+// builds write request
 unsigned long buildWriteRequest(DataId dataId, uint16_t dataValue)
 {
   return buildRequest(WRITE_DATA, dataId, dataValue);
 }
 
+// sets idle state
 void setIdleState() {
   digitalWrite(OT_OUT_PIN, HIGH);
 }
 
+// sets active state
 void setActiveState() {
   digitalWrite(OT_OUT_PIN, LOW);
 }
 
+// activates communication with boiler
 void activateBoiler() {
   setIdleState();
   delay(1000);
+  // TODO:
   // don't know proper values so far
   readId(0, 31);
 }
@@ -259,6 +283,8 @@ unsigned long readResponse() {
   return response;
 }
 
+// -----------------------------------------------------------------------------------
+
 void setup() {
   pinMode(OT_IN_PIN, INPUT);
   pinMode(OT_OUT_PIN, OUTPUT);
@@ -267,12 +293,87 @@ void setup() {
   Serial.println("Start");
 }
 
-unsigned loopmillis;
+// -----------------------------------------------------------------------------------
 
 void loop() {
   loopSerial();
   delay(10);
 }
+
+// -----------------------------------------------------------------------------------
+
+void loopSerial()
+{
+  while (Serial.available()) {
+    // get the new byte:
+    char inChar = (char)Serial.read();
+    // add it to the inputString:
+
+    // if the incoming character is a newline, set a flag
+    // so the main loop can do something about it:
+    if (inChar == '\n' || inChar == '\r') {
+      Serial.println(inputString);
+
+      uint16_t v = 0;
+      int id = -1;
+
+      String cmd = getValue(inputString, delimiter, 0);
+      if (cmd == "OpenthermRead" || cmd == "r" || cmd == "OpenthermWrite" || cmd == "w") {
+        id = getValue(inputString, delimiter, 1).toInt();
+        if ((cmd == "OpenthermRead" || cmd == "r") && id == 0 || cmd == "OpenthermWrite" || cmd == "w") {
+          String str = getValue(inputString, delimiter, 2);
+          switch (messages[getIdIdx(id)].dataType)
+          {
+            case DT_FLAG8:
+              v = (uint16_t)str.toInt();
+              break;
+            case DT_U8:
+              v = (uint16_t)str.toInt();
+              break;
+            case DT_S8:
+              v = (uint16_t)str.toInt();
+              break;
+            case DT_F88:
+              // TODO: parse float
+              v = toF88(str.toInt());
+              break;
+            case DT_U16:
+              v = (uint16_t)str.toInt();
+              break;
+            case DT_S16:
+              v = (int16_t)str.toInt();
+              break;
+            default:
+              Serial.println("Unknown type!");
+              return;
+              break;
+          }
+        }
+      }
+
+      if (cmd == "init") {
+        Serial.println("Initializng...");
+        init();
+        Serial.println("Initialized.");
+      } if (cmd == "reset" || cmd == "restart") {
+#ifdef ESP32
+        Serial.println("Restarting ESP...");
+        ESP.restart();
+#endif
+      } else if (cmd == "OpenthermRead" || cmd == "r") {
+        readId(id, v);
+      } else if (cmd == "OpenthermWrite" || cmd == "w") {
+        writeId(id, v);
+      }
+      inputString = "";
+    } else {
+      inputString += inChar;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------------
+
 int getIdIdx(int id) {
   for (int i = 0; i < MESSAGES_COUNT; i++) {
     if (messages[i].dataId == id)
@@ -280,6 +381,7 @@ int getIdIdx(int id) {
   }
   return -1;
 }
+
 void readId(int id, uint16_t v)
 {
   int idx = getIdIdx(id);
@@ -477,13 +579,6 @@ void writeIdx(int idx, uint16_t v)
   }
 }
 
-void readAll()
-{
-  for (int i = 0; i < MESSAGES_COUNT; i++) {
-    readIdx(i, 0);
-  }
-}
-
 String getValue(String data, char separator, int index)
 {
   int found = 0;
@@ -501,75 +596,8 @@ String getValue(String data, char separator, int index)
   return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
-char delimiter = ' ';
 
-void loopSerial()
-{
-  while (Serial.available()) {
-    // get the new byte:
-    char inChar = (char)Serial.read();
-    // add it to the inputString:
-
-    // if the incoming character is a newline, set a flag
-    // so the main loop can do something about it:
-    if (inChar == '\n' || inChar == '\r') {
-      Serial.println(inputString);
-
-      uint16_t v = 0;
-      int id = -1;
-
-      if (getValue(inputString, delimiter, 0) == "OpenthermRead" || getValue(inputString, delimiter, 0) == "r" || getValue(inputString, delimiter, 0) == "OpenthermWrite" || getValue(inputString, delimiter, 0) == "w") {
-        id = getValue(inputString, delimiter, 1).toInt();
-        if ((getValue(inputString, delimiter, 0) == "OpenthermRead" || getValue(inputString, delimiter, 0) == "r") && id == 0 || getValue(inputString, delimiter, 0) == "OpenthermWrite" || getValue(inputString, delimiter, 0) == "w") {
-          switch (messages[getIdIdx(id)].dataType)
-          {
-            case DT_FLAG8:
-              v = (uint16_t)getValue(inputString, delimiter, 2).toInt();
-              break;
-            case DT_U8:
-              v = (uint16_t)getValue(inputString, delimiter, 2).toInt();
-              break;
-            case DT_S8:
-              v = (uint16_t)getValue(inputString, delimiter, 2).toInt();
-              break;
-            case DT_F88:
-              v = toF88(getValue(inputString, delimiter, 2).toInt());
-              break;
-            case DT_U16:
-              v = (uint16_t)getValue(inputString, delimiter, 2).toInt();
-              break;
-            case DT_S16:
-              v = (uint16_t)getValue(inputString, delimiter, 2).toInt();
-              break;
-            default:
-              Serial.println("Unknown type!");
-              return;
-              break;
-          }
-        }
-      }
-
-      if (getValue(inputString, delimiter, 0) == "init") {
-        Serial.println("Initializng...");
-        init();
-        Serial.println("Initialized.");
-      } if (getValue(inputString, delimiter, 0) == "reset" || getValue(inputString, delimiter, 0) == "restart") {
-#ifdef ESP32        
-        Serial.println("Restarting ESP...");
-        ESP.restart();
-#endif        
-      } else if (getValue(inputString, delimiter, 0) == "OpenthermRead" || getValue(inputString, delimiter, 0) == "r") {
-        readId(id, v);
-      } else if (getValue(inputString, delimiter, 0) == "OpenthermWrite" || getValue(inputString, delimiter, 0) == "w") {
-        writeId(id, v);
-      }
-      inputString = "";
-    } else {
-      inputString += inChar;
-    }
-  }
-}
-
+// does init from serial input command
 void init()
 {
   activateBoiler();
