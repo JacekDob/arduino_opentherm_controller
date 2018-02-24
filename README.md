@@ -1,6 +1,6 @@
-# arduino_opentherm_controller
-Arduino OpenTherm Controller
+# Arduino/ESP8266/ESP32 OpenTherm Controller
 
+Based on:
 http://ihormelnyk.com/Page/arduino_opentherm_controller
 
 # Usage
