@@ -5,9 +5,9 @@
 // https://www.domoticaforum.eu/viewforum.php?f=75
 
 // set according to own wiring
-const int OT_IN_PIN = 19;
-const int OT_OUT_PIN = 18;
-const unsigned int bitPeriod = 1000; //1020 //microseconds, 1ms -10%+15%
+const int OT_IN_PIN = 15;   //D8
+const int OT_OUT_PIN = 13;  //D7
+const unsigned int bitPeriod = 1020; //1020 //microseconds, 1ms -10%+15%
 
 // a string to hold incoming serial data
 String inputString = "";
@@ -75,46 +75,46 @@ typedef struct
 
 // messages data
 OTMessage messages[MESSAGES_COUNT] = {
-  {(DataId)0, DIR_READ, "Status", DT_FLAG8, "Master and Slave Status flags."},
-  {(DataId)1, DIR_WRITE, "TSet", DT_F88, "Control setpoint ie CH water temperature setpoint (°C) "},
-  {(DataId)2, DIR_WRITE, "M-Config / M-MemberIDcode", DT_FLAG8, "Master Configuration Flags / Master MemberID Code "},
-  {(DataId)3, DIR_READ, "S-Config / S-MemberIDcode", DT_FLAG8, "Slave Configuration Flags / Slave MemberID Code "},
-  {(DataId)4, DIR_WRITE, "Command", DT_U8, "Remote Command "},
-  {(DataId)5, DIR_READ, "ASF-flags / OEM-fault-code", DT_FLAG8, "Application-specific fault flags and OEM fault code "},
-  {(DataId)6, DIR_READ, "RBP-flags", DT_FLAG8, "Remote boiler parameter transfer-enable & read/write flags "},
-  {(DataId)7, DIR_WRITE, "Cooling-control", DT_F88, "Cooling control signal (%) "},
-  {(DataId)8, DIR_WRITE, " TsetCH2", DT_F88, "Control setpoint for 2e CH circuit (°C) "},
-  {(DataId)9, DIR_READ, "TrOverride", DT_F88, "Remote override room setpoint "},
-  {(DataId)10, DIR_READ, "TSP", DT_U8, "Number of Transparent-Slave-Parameters supported by slave "},
-  {(DataId)11, DIR_BOTH, "TSP-index / TSP-value", DT_U8, "Index number / Value of referred-to transparent slave parameter."},
-  {(DataId)12, DIR_READ, "FHB-size", DT_U8, "Size of Fault-History-Buffer supported by slave "},
-  {(DataId)13, DIR_READ, "FHB-index / FHB-value", DT_U8, "Index number / Value of referred-to fault-history buffer entry."},
+  {(DataId)0, DIR_READ,   "Status", DT_FLAG8, "Master and Slave Status flags."},
+  {(DataId)1, DIR_WRITE,  "TSet", DT_F88, "Control setpoint ie CH water temperature setpoint (°C) "},
+  {(DataId)2, DIR_WRITE,  "M-Config / M-MemberIDcode", DT_FLAG8, "Master Configuration Flags / Master MemberID Code "},
+  {(DataId)3, DIR_READ,   "S-Config / S-MemberIDcode", DT_FLAG8, "Slave Configuration Flags / Slave MemberID Code "},
+  {(DataId)4, DIR_WRITE,  "Command", DT_U8, "Remote Command "},
+  {(DataId)5, DIR_READ,   "ASF-flags / OEM-fault-code", DT_FLAG8, "Application-specific fault flags and OEM fault code "},
+  {(DataId)6, DIR_READ,   "RBP-flags", DT_FLAG8, "Remote boiler parameter transfer-enable & read/write flags "},
+  {(DataId)7, DIR_WRITE,  "Cooling-control", DT_F88, "Cooling control signal (%) "},
+  {(DataId)8, DIR_WRITE,  " TsetCH2", DT_F88, "Control setpoint for 2e CH circuit (°C) "},
+  {(DataId)9, DIR_READ,   "TrOverride", DT_F88, "Remote override room setpoint "},
+  {(DataId)10, DIR_READ,  "TSP", DT_U8, "Number of Transparent-Slave-Parameters supported by slave "},
+  {(DataId)11, DIR_BOTH,  "TSP-index / TSP-value", DT_U8, "Index number / Value of referred-to transparent slave parameter."},
+  {(DataId)12, DIR_READ,  "FHB-size", DT_U8, "Size of Fault-History-Buffer supported by slave "},
+  {(DataId)13, DIR_READ,  "FHB-index / FHB-value", DT_U8, "Index number / Value of referred-to fault-history buffer entry."},
   {(DataId)14, DIR_WRITE, "Max-rel-mod-level-setting", DT_F88, "Maximum relative modulation level setting (%) "},
-  {(DataId)15, DIR_READ, "Max-Capacity / Min-Mod-Level", DT_U8, "Maximum boiler capacity (kW) / Minimum boiler modulation level(%) "},
+  {(DataId)15, DIR_READ,  "Max-Capacity / Min-Mod-Level", DT_U8, "Maximum boiler capacity (kW) / Minimum boiler modulation level(%) "},
   {(DataId)16, DIR_WRITE, "TrSet", DT_F88, "Room Setpoint (°C) "},
-  {(DataId)17, DIR_READ, "Rel.-mod-level", DT_F88, "Relative Modulation Level (%) "},
-  {(DataId)18, DIR_READ, "CH-pressure", DT_F88, "Water pressure in CH circuit (bar) "},
-  {(DataId)19, DIR_READ, "DHW-flow-rate", DT_F88, "Water flow rate in DHW circuit.(litres/minute) "},
-  {(DataId)20, DIR_BOTH, "Day-Time", DT_U8, "Day of Week and Time of Day "},
-  {(DataId)21, DIR_BOTH, "Date", DT_U8, "Calendar date "},
-  {(DataId)22, DIR_BOTH, "Year", DT_U16, "Calendar year "},
+  {(DataId)17, DIR_READ,  "Rel.-mod-level", DT_F88, "Relative Modulation Level (%) "},
+  {(DataId)18, DIR_READ,  "CH-pressure", DT_F88, "Water pressure in CH circuit (bar) "},
+  {(DataId)19, DIR_READ,  "DHW-flow-rate", DT_F88, "Water flow rate in DHW circuit.(litres/minute) "},
+  {(DataId)20, DIR_BOTH,  "Day-Time", DT_U8, "Day of Week and Time of Day "},
+  {(DataId)21, DIR_BOTH,  "Date", DT_U8, "Calendar date "},
+  {(DataId)22, DIR_BOTH,  "Year", DT_U16, "Calendar year "},
   {(DataId)23, DIR_WRITE, "TrSetCH2", DT_F88, "Room Setpoint for 2nd CH circuit (°C) "},
   {(DataId)24, DIR_WRITE, "Tr", DT_F88, "Room temperature (°C) "},
-  {(DataId)25, DIR_READ, "Tboiler", DT_F88, "Boiler flow water temperature (°C) "},
-  {(DataId)26, DIR_READ, "Tdhw", DT_F88, "DHW temperature (°C) "},
-  {(DataId)27, DIR_READ, "Toutside", DT_F88, "Outside temperature (°C) "},
-  {(DataId)28, DIR_READ, "Tret", DT_F88, "Return water temperature (°C) "},
-  {(DataId)29, DIR_READ, "Tstorage", DT_F88, "Solar storage temperature (°C) "},
-  {(DataId)30, DIR_READ, "Tcollector", DT_F88, "Solar collector temperature (°C)"},
-  {(DataId)31, DIR_READ, "TflowCH2", DT_F88, "Flow water temperature CH2 circuit (°C) "},
-  {(DataId)32, DIR_READ, "Tdhw2", DT_F88, "Domestic hot water temperature 2 (°C) "},
-  {(DataId)33, DIR_READ, "Texhaust", DT_S16, "Boiler exhaust temperature (°C) "},
-  {(DataId)48, DIR_READ, "TdhwSet-UB / TdhwSet-LB", DT_S8, "DHW setpoint upper & lower bounds for adjustment (°C) "},
-  {(DataId)49, DIR_READ, "MaxTSet-UB / MaxTSet-LB", DT_S8, "Max CH water setpoint upper & lower bounds for adjustment (°C) "},
-  {(DataId)50, DIR_READ, "Hcratio-UB / Hcratio-LB", DT_S8, "OTC heat curve ratio upper & lower bounds for adjustment"},
-  {(DataId)56, DIR_BOTH, "TdhwSet", DT_F88, "DHW setpoint (°C)"},
-  {(DataId)57, DIR_BOTH, "MaxTSet", DT_F88, "Max CH water setpoint (°C) (Remote parameters 2) "},
-  {(DataId)58, DIR_BOTH, "Hcratio", DT_F88, "OTC heat curve ratio (°C) (Remote parameter 3) "},
+  {(DataId)25, DIR_READ,  "Tboiler", DT_F88, "Boiler flow water temperature (°C) "},
+  {(DataId)26, DIR_READ,  "Tdhw", DT_F88, "DHW temperature (°C) "},
+  {(DataId)27, DIR_READ,  "Toutside", DT_F88, "Outside temperature (°C) "},
+  {(DataId)28, DIR_READ,  "Tret", DT_F88, "Return water temperature (°C) "},
+  {(DataId)29, DIR_READ,  "Tstorage", DT_F88, "Solar storage temperature (°C) "},
+  {(DataId)30, DIR_READ,  "Tcollector", DT_F88, "Solar collector temperature (°C)"},
+  {(DataId)31, DIR_READ,  "TflowCH2", DT_F88, "Flow water temperature CH2 circuit (°C) "},
+  {(DataId)32, DIR_READ,  "Tdhw2", DT_F88, "Domestic hot water temperature 2 (°C) "},
+  {(DataId)33, DIR_READ,  "Texhaust", DT_S16, "Boiler exhaust temperature (°C) "},
+  {(DataId)48, DIR_READ,  "TdhwSet-UB / TdhwSet-LB", DT_S8, "DHW setpoint upper & lower bounds for adjustment (°C) "},
+  {(DataId)49, DIR_READ,  "MaxTSet-UB / MaxTSet-LB", DT_S8, "Max CH water setpoint upper & lower bounds for adjustment (°C) "},
+  {(DataId)50, DIR_READ,  "Hcratio-UB / Hcratio-LB", DT_S8, "OTC heat curve ratio upper & lower bounds for adjustment"},
+  {(DataId)56, DIR_BOTH,  "TdhwSet", DT_F88, "DHW setpoint (°C)"},
+  {(DataId)57, DIR_BOTH,  "MaxTSet", DT_F88, "Max CH water setpoint (°C) (Remote parameters 2) "},
+  {(DataId)58, DIR_BOTH,  "Hcratio", DT_F88, "OTC heat curve ratio (°C) (Remote parameter 3) "},
   {(DataId)100, DIR_READ, "Remote override function", DT_FLAG8, "Function of manual and program changes in master and remote room setpoint."},
   {(DataId)115, DIR_READ, "OEM diagnostic code", DT_U16, "OEM-specific diagnostic/service code "},
   {(DataId)116, DIR_BOTH, "Burner starts", DT_U16, "Number of starts burner "},
@@ -125,9 +125,9 @@ OTMessage messages[MESSAGES_COUNT] = {
   {(DataId)121, DIR_BOTH, "CH pump operation hours", DT_U16, "Number of hours that CH pump has been running "},
   {(DataId)122, DIR_BOTH, "DHW pump/valve operation hours", DT_U16, "Number of hours that DHW pump has been running or DHW valve has been opened "},
   {(DataId)123, DIR_BOTH, "DHW burner operation hours", DT_U16, "Number of hours that burner is in operation during DHW mode "},
-  {(DataId)124, DIR_WRITE, "OpenTherm version Master", DT_F88, "The implemented version of the OpenTherm Protocol Specification in the master."},
+  {(DataId)124, DIR_WRITE,"OpenTherm version Master", DT_F88, "The implemented version of the OpenTherm Protocol Specification in the master."},
   {(DataId)125, DIR_READ, "OpenTherm version Slave", DT_F88, "The implemented version of the OpenTherm Protocol Specification in the slave."},
-  {(DataId)126, DIR_WRITE, "Master-version", DT_U8, "Master product version number and type "},
+  {(DataId)126, DIR_WRITE,"Master-version", DT_U8, "Master product version number and type "},
   {(DataId)127, DIR_READ, "Slave-version", DT_U8, "Slave product version number and type"}
 };
 
@@ -355,8 +355,8 @@ void loopSerial()
       }
 
       if (cmd == "init") {
-        Serial.println("Initializng...");
-        init();
+        Serial.println("Initializing...");
+        initialize();
         Serial.println("Initialized.");
       } if (cmd == "reset" || cmd == "restart") {
 #ifdef ESP32
@@ -600,9 +600,8 @@ String getValue(String data, char separator, int index)
 }
 
 
-// does init from serial input command
-void init()
+// does initialize from serial input command
+void initialize()
 {
   activateBoiler();
 }
-
