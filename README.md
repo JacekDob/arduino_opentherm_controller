@@ -53,11 +53,11 @@ Some other also works.
 
 ### MCU
 
-I am using ESP32 but it also should work on Arduino or ESP8266.
+I am using Wemos D1 mini with pins for IN:D8; OUT:D7 but it also should work on Arduino or ESP32.
 
 ### Boiler
 
-I have Vitodens 100-W.
+I have Hajdu HGk-28.
 
 ### Discussion
 
