@@ -8,6 +8,7 @@
 const int OT_IN_PIN = 15;   //D8
 const int OT_OUT_PIN = 13;  //D7
 const unsigned int bitPeriod = 1020; //1020 //microseconds, 1ms -10%+15%
+const unsigned int waitResponseTime = 800;
 
 // a string to hold incoming serial data
 String inputString = "";
@@ -134,7 +135,7 @@ OTMessage messages[MESSAGES_COUNT] = {
 uint8_t status_activate_CH = 0x1;
 uint8_t status_activate_DHW = 0x2;
 uint16_t status_activate_CH_DHW = (status_activate_CH | status_activate_DHW) << 8;
-uint32_t time= 0L;
+uint32_t timestamp= 0L;
  
 
 // checks if value has even parity
@@ -217,7 +218,7 @@ void setActiveState() {
 // activates communication with boiler
 void activateBoiler() {
   setIdleState();
-  delay(1000);
+  delay(waitResponseTime);
   //readId(0, value);
 }
 
@@ -303,9 +304,9 @@ void setup() {
 void loop() {
   loopSerial();
   delay(10);
-  if (millis()-time > 900) {
-	time = millis();
-	readId(25);
+  if (millis()-timestamp > 900) {
+    timestamp = millis();
+    readId(25, 0);
   }
 }
 
@@ -370,16 +371,16 @@ void loopSerial()
         ESP.restart();
 #endif
       } else if (cmd == "OpenthermRead" || cmd == "r") {
-		time = millis();
-        readId(id, v);		
+    timestamp = millis();
+        readId(id, v);    
       } else if (cmd == "OpenthermWrite" || cmd == "w") {
-		time = millis();
-        writeId(id, v);		
+    timestamp = millis();
+        writeId(id, v);   
       }
       inputString = "";
     } else {
       inputString += inChar;
-    }	
+    } 
   }
 }
 
@@ -508,7 +509,7 @@ void readIdx(int idx, uint16_t v)
           }
         }
       }
-      delay(950);
+      delay(waitResponseTime);
     }
     Serial.println();
   } else {
@@ -582,7 +583,7 @@ void writeIdx(int idx, uint16_t v)
             break;
         }
       }
-      delay(950);
+      delay(waitResponseTime);
     }
     Serial.println();
   } else {
