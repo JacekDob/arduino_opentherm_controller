@@ -134,6 +134,8 @@ OTMessage messages[MESSAGES_COUNT] = {
 uint8_t status_activate_CH = 0x1;
 uint8_t status_activate_DHW = 0x2;
 uint16_t status_activate_CH_DHW = (status_activate_CH | status_activate_DHW) << 8;
+uint32_t time= 0L;
+ 
 
 // checks if value has even parity
 int hasEvenParity(unsigned int x)
@@ -301,6 +303,10 @@ void setup() {
 void loop() {
   loopSerial();
   delay(10);
+  if (millis()-time > 900) {
+	time = millis();
+	readId(25);
+  }
 }
 
 // -----------------------------------------------------------------------------------
@@ -364,14 +370,16 @@ void loopSerial()
         ESP.restart();
 #endif
       } else if (cmd == "OpenthermRead" || cmd == "r") {
-        readId(id, v);
+		time = millis();
+        readId(id, v);		
       } else if (cmd == "OpenthermWrite" || cmd == "w") {
-        writeId(id, v);
+		time = millis();
+        writeId(id, v);		
       }
       inputString = "";
     } else {
       inputString += inChar;
-    }
+    }	
   }
 }
 
