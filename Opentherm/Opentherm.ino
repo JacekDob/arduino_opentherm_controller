@@ -8,7 +8,8 @@
 const int OT_IN_PIN = 15;   //D8
 const int OT_OUT_PIN = 13;  //D7
 const unsigned int bitPeriod = 1020; //1020 //microseconds, 1ms -10%+15%
-const unsigned int waitResponseTime = 800;
+const unsigned int autoMessageTime = 950;
+const unsigned int waitResponseTime = 900;
 
 // a string to hold incoming serial data
 String inputString = "";
@@ -135,7 +136,9 @@ OTMessage messages[MESSAGES_COUNT] = {
 uint8_t status_activate_CH = 0x1;
 uint8_t status_activate_DHW = 0x2;
 uint16_t status_activate_CH_DHW = (status_activate_CH | status_activate_DHW) << 8;
-uint32_t timestamp= 0L;
+uint32_t timestamp = 0L;
+uint8_t initialized = 0;
+uint8_t loopmessageno = 0;
  
 
 // checks if value has even parity
@@ -296,7 +299,8 @@ void setup() {
   pinMode(OT_OUT_PIN, OUTPUT);
   setActiveState();
   Serial.begin(115200);
-  Serial.println("Start");
+  Serial.println("");  
+  Serial.println("\nStart");
 }
 
 // -----------------------------------------------------------------------------------
@@ -304,9 +308,49 @@ void setup() {
 void loop() {
   loopSerial();
   delay(10);
-  if (millis()-timestamp > 900) {
+  if (millis()-timestamp > autoMessageTime) {
     timestamp = millis();
-    readId(25, 0);
+    if (initialized > 0) {
+      switch (loopmessageno) {
+        case 1:
+          readId(17, 0);
+          break;
+        case 2:
+          readId(18, 0);
+          break;
+        case 3:
+          readId(19, 0);
+          break;
+        case 4:
+          readId(25, 0);
+          break;
+        case 5:
+          readId(26, 0);
+          break;
+        case 6:
+          readId(27, 0);
+          break;
+        case 7:
+          readId(28, 0);
+          break;
+        case 8:
+          readId(33, 0);
+          break;
+        case 9:
+          readId(56, 0);
+          break;
+        case 10:
+          readId(57, 0);
+          break;
+        case 11:
+          readId(58, 0);
+          break;
+        default:
+          loopmessageno=0;
+          break;
+      }
+      loopmessageno++;
+    }
   }
 }
 
@@ -613,4 +657,5 @@ String getValue(String data, char separator, int index)
 void initialize()
 {
   activateBoiler();
+  initialized = 1;
 }
