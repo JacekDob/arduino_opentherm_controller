@@ -3,6 +3,8 @@
 # Usage
 
 It uses serial commands.
+First you have to initialize. After initialization, the code will perform predefined readings to keep the opentherm connection active, meanwhile watching and executing commands from the serial.
+OpenTherm protocoll is defined to activate CH when no valid message arrives within 4 seconds to the boiler. My boiler does this after one second.
 
 ## Initialization
 ```
@@ -26,12 +28,12 @@ w [id] [value]
 ## What works
 
 - 0-Status - CH - 256, DHW - 512, CH&DHW - 768
-- 1-Control CH setpoint
-- 18-CH water pressure
-- 25-Boiler flow water temperature
-- 26-DHW temperature
-- 27-Outside temperature
-- 56-DHW setpoint
+- w 1 55 -Control CH setpoint (to 55 °C)
+- r 18 -CH water pressure
+- r 25 -Boiler flow water temperature
+- r 26 -DHW temperature
+- r 27 -Outside temperature
+- w 56 40 -DHW setpoint (to 40 °C)
 
 see my video:
 https://www.youtube.com/watch?v=Xk3SmCZ2tsc
