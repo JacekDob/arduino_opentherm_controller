@@ -5,11 +5,10 @@
 // https://www.domoticaforum.eu/viewforum.php?f=75
 
 // set according to own wiring
-const int OT_IN_PIN = 15;   //D8
-const int OT_OUT_PIN = 13;  //D7
+const byte OT_IN_PIN = 15;   //D8
+const byte OT_OUT_PIN = 13;  //D7
 const unsigned int bitPeriod = 1020; //1020 //microseconds, 1ms -10%+15%
-const unsigned int autoMessageTime = 950;
-const unsigned int waitResponseTime = 900;
+const unsigned int waitResponseTime = 900;    //automessagetime = waitResponseTime + 50
 
 // a string to hold incoming serial data
 String inputString = "";
@@ -133,10 +132,10 @@ OTMessage messages[MESSAGES_COUNT] = {
   {(DataId)127, DIR_READ, "Slave-version", DT_U8, "Slave product version number and type"}
 };
 
-uint8_t status_activate_CH = 0x1;
-uint8_t status_activate_DHW = 0x2;
-uint16_t status_activate_CH_DHW = (status_activate_CH | status_activate_DHW) << 8;
-uint32_t timestamp = 0L;
+// uint8_t status_activate_CH = 0x1;
+// uint8_t status_activate_DHW = 0x2;
+// uint16_t status_activate_CH_DHW = (status_activate_CH | status_activate_DHW) << 8;
+uint16_t timestamp = 0L;
 uint8_t initialized = 0;
 uint8_t loopmessageno = 0;
  
@@ -263,7 +262,10 @@ unsigned long sendRequest(unsigned long request) {
 bool waitForResponse() {
   unsigned long time_stamp = micros();
   while (digitalRead(OT_IN_PIN) != HIGH) { //start bit
-    if (micros() - time_stamp >= 1000000) {
+    if (micros() < time_stamp) {
+      time_stamp = time_stamp - 4294967295;
+    }
+    if (micros() - time_stamp >= waitResponseTime) {
       Serial.println("Response timeout");
       return false;
     }
@@ -292,7 +294,7 @@ unsigned long readResponse() {
   return response;
 }
 
-// ==================================================================================================================================
+// -----------------------------------------------------------------------------------
 
 void setup() {
   pinMode(OT_IN_PIN, INPUT);
@@ -303,29 +305,50 @@ void setup() {
   Serial.println("\nStart");
 }
 
-// ==================================================================================================================================
+// -----------------------------------------------------------------------------------
 
 void loop() {
   loopSerial();
   delay(10);
-  if (millis()-timestamp > autoMessageTime) {
+  if (millis() < timestamp) {
+    timestamp = timestamp - 65535;
+  }
+  if (millis()-timestamp-50 > waitResponseTime) {
     timestamp = millis();
     if (initialized > 0) {
       switch (loopmessageno) {
         case 1:
-          readId(18, 0);
+          readId(17, 0);
           break;
         case 2:
-          readId(25, 0);
+          readId(18, 0);
           break;
         case 3:
-          readId(26, 0);
+          readId(19, 0);
           break;
         case 4:
-          readId(27, 0);
+          readId(25, 0);
           break;
         case 5:
+          readId(26, 0);
+          break;
+        case 6:
+          readId(27, 0);
+          break;
+        case 7:
+          readId(28, 0);
+          break;
+        case 8:
+          readId(33, 0);
+          break;
+        case 9:
           readId(56, 0);
+          break;
+        case 10:
+          readId(57, 0);
+          break;
+        case 11:
+          readId(58, 0);
           break;
         default:
           loopmessageno=0;
@@ -336,7 +359,7 @@ void loop() {
   }
 }
 
-// ==================================================================================================================================
+// -----------------------------------------------------------------------------------
 
 void loopSerial()
 {
