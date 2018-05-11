@@ -1,7 +1,7 @@
 # Arduino/ESP8266/ESP32 OpenTherm Controller
 
 <p align="center">
-  <img src="/Wemos D1 shield/OpenTherm_D1_shield.png" width="200"/>
+  <img src="/Wemos D1 shield/OpenTherm_D1_shield.png" width=80%/>
 </p>
 
 # Usage
