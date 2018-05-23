@@ -316,6 +316,7 @@ void loop() {
   if (millis()-timestamp-50 > waitResponseTime) {
     timestamp = millis();
     if (initialized > 0) {
+      Serial.println("Auto reading:");  
       switch (loopmessageno) {
         case 1:
           readId(17, 0);
