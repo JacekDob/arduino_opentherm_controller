@@ -135,7 +135,7 @@ OTMessage messages[MESSAGES_COUNT] = {
 // uint8_t status_activate_CH = 0x1;
 // uint8_t status_activate_DHW = 0x2;
 // uint16_t status_activate_CH_DHW = (status_activate_CH | status_activate_DHW) << 8;
-uint16_t timestamp = 0L;
+uint32_t timestamp = 0L;
 uint8_t initialized = 0;
 uint8_t loopmessageno = 0;
  
@@ -311,7 +311,7 @@ void loop() {
   loopSerial();
   delay(10);
   if (millis() < timestamp) {
-    timestamp = timestamp - 65535;
+    timestamp = timestamp - 4294967295;
   }
   if (millis()-timestamp-50 > waitResponseTime) {
     timestamp = millis();
@@ -349,6 +349,7 @@ void loop() {
           break;
         case 11:
           readId(58, 0);
+          loopmessageno=0;
           break;
         default:
           loopmessageno=0;
