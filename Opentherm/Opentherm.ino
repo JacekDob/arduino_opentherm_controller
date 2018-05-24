@@ -8,7 +8,7 @@
 const byte OT_IN_PIN = 15;   //D8
 const byte OT_OUT_PIN = 13;  //D7
 const unsigned int bitPeriod = 1020; //1020 //microseconds, 1ms -10%+15%
-const unsigned int waitResponseTime = 900;    //automessagetime = waitResponseTime + 50
+const unsigned int waitResponseTime = 950;    //automessagetime = waitResponseTime + 50
 
 // a string to hold incoming serial data
 String inputString = "";
@@ -138,6 +138,12 @@ OTMessage messages[MESSAGES_COUNT] = {
 uint32_t timestamp = 0L;
 uint8_t initialized = 0;
 uint8_t loopmessageno = 0;
+
+String CHpressure = " N/A";
+String CHwaterTemp = "  N/A";
+String DHWwaterTemp = "  N/A";
+String OutsideTemp = "  N/A";
+String MaxCHtemp = "  N/A";
  
 
 // checks if value has even parity
@@ -248,8 +254,8 @@ void printBinary(unsigned long val, int bits) {
 
 unsigned long sendRequest(unsigned long request) {
   Serial.print("Request:  ");
-  printBinary(request, 32);
-  Serial.print(" / ");
+  //printBinary(request, 32);
+  //Serial.print(" / ");
   Serial.print(request, HEX);
   Serial.println();
   sendFrame(request);
@@ -265,8 +271,8 @@ bool waitForResponse() {
     if (micros() < time_stamp) {
       time_stamp = time_stamp - 4294967295;
     }
-    if (micros() - time_stamp >= waitResponseTime) {
-      Serial.println("Response timeout");
+    if (micros() - time_stamp >= waitResponseTime * 1000) {        //1000000
+      Serial.println("!!!                     !!!                           Response timeout!!!");
       return false;
     }
   }
@@ -281,8 +287,8 @@ unsigned long readResponse() {
     delayMicroseconds(bitPeriod);
   }
   Serial.print("Response: ");
-  printBinary(response, 32);
-  Serial.print(" / ");
+  //printBinary(response, 32);
+  //Serial.print(" / ");
   Serial.print(response, HEX);
   Serial.println("");
 
@@ -300,7 +306,7 @@ void setup() {
   pinMode(OT_IN_PIN, INPUT);
   pinMode(OT_OUT_PIN, OUTPUT);
   setActiveState();
-  Serial.begin(115200);
+  Serial.begin(256000);
   Serial.println("");  
   Serial.println("\nStart");
 }
@@ -313,43 +319,27 @@ void loop() {
   if (millis() < timestamp) {
     timestamp = timestamp - 4294967295;
   }
-  if (millis()-timestamp-50 > waitResponseTime) {
+  if (millis()-timestamp > waitResponseTime + 50) {
     timestamp = millis();
     if (initialized > 0) {
-      Serial.println("Auto reading:");  
       switch (loopmessageno) {
         case 1:
-          readId(17, 0);
-          break;
-        case 2:
           readId(18, 0);
           break;
-        case 3:
-          readId(19, 0);
-          break;
-        case 4:
+        case 2:
           readId(25, 0);
           break;
-        case 5:
+        case 3:
           readId(26, 0);
           break;
-        case 6:
+        case 4:
           readId(27, 0);
           break;
-        case 7:
-          readId(28, 0);
-          break;
-        case 8:
-          readId(33, 0);
-          break;
-        case 9:
+        case 5:
           readId(56, 0);
-          break;
-        case 10:
-          readId(57, 0);
-          break;
-        case 11:
-          readId(58, 0);
+          Serial.println("\n    CH press | CH temp | DHW temp | Out temp | Max CH");
+          Serial.println("        " +CHpressure + " |   " + CHwaterTemp + " |    " + DHWwaterTemp + " |    " + OutsideTemp + " |  " + MaxCHtemp);
+          Serial.println("\n\n");
           loopmessageno=0;
           break;
         default:
@@ -461,11 +451,31 @@ void readIdx(int idx, uint16_t v)
   int i = idx;
 
   if (1 || messages[i].dir == DIR_READ || messages[i].dir == DIR_BOTH) {
+    
+              switch (messages[i].dataId){
+              case 18:
+                Serial.println("Auto-Reading: " + String(messages[i].description));
+              break;
+              case 25:
+                Serial.println("Auto-Reading: " + String(messages[i].description));
+              break;
+              case 26:
+                Serial.println("Auto-Reading: " + String(messages[i].description));
+              break;
+              case 27:
+                Serial.println("Auto-Reading: " + String(messages[i].description));
+              break;
+              case 56:
+                Serial.println("Auto-Reading: " + String(messages[i].description));
+              break;
+              default:
     Serial.println("DataId: " + String(messages[i].dataId));
     Serial.println("Dir: " + String(messages[i].dir));
-    Serial.println("DataObject: " + String(messages[i].dataObject));
-    Serial.println("DataType: " + String(messages[i].dataType));
+    //Serial.println("DataObject: " + String(messages[i].dataObject));
+    //Serial.println("DataType: " + String(messages[i].dataType));
     Serial.println("Description: " + String(messages[i].description));
+              break;
+              }
 
     unsigned long request = buildReadRequest(messages[i].dataId, v);
     unsigned long response = sendRequest(request);
@@ -485,7 +495,7 @@ void readIdx(int idx, uint16_t v)
         } else {
           uint16_t dataValue = response & 0xFFFF;
 
-          Serial.println("dataValue: ");
+          //Serial.println("dataValue: ");
 
           switch (messages[i].dataType)
           {
@@ -495,23 +505,41 @@ void readIdx(int idx, uint16_t v)
               Serial.println("OpenthermReadResponse " + String(messages[i].dataId) + " " + String((uint8_t)dataValue));
               break;
             case DT_U8:
-              Serial.println((uint8_t)dataValue);
+              //Serial.println((uint8_t)dataValue);
               Serial.println("OpenthermReadResponse " + String(messages[i].dataId) + " " + String((uint8_t)dataValue));
               break;
             case DT_S8:
-              Serial.println((int8_t)dataValue);
+              //Serial.println((int8_t)dataValue);
               Serial.println("OpenthermReadResponse " + String(messages[i].dataId) + " " + String((int8_t)dataValue));
               break;
             case DT_F88:
-              Serial.println(fromF88(dataValue));
-              Serial.println("OpenthermReadResponse " + String(messages[i].dataId) + " " + String(fromF88(dataValue)));
+              switch (messages[i].dataId){
+              case 18:
+                CHpressure = String(fromF88(dataValue));
               break;
+              case 25:
+                CHwaterTemp = String(fromF88(dataValue));
+              break;
+              case 26:
+                DHWwaterTemp = String(fromF88(dataValue));
+              break;
+              case 27:
+                OutsideTemp = String(fromF88(dataValue));
+              break;
+              case 56:
+                MaxCHtemp = String(fromF88(dataValue));
+              break;
+              default:
+                //Serial.println(fromF88(dataValue));
+                Serial.println("OpenthermReadResponse " + String(messages[i].dataId) + " " + String(fromF88(dataValue)));
+              break;
+              }
             case DT_U16:
-              Serial.println(dataValue);
+              //Serial.println(dataValue);
               Serial.println("OpenthermReadResponse " + String(messages[i].dataId) + " " + String((uint16_t)dataValue));
               break;
             case DT_S16:
-              Serial.println((int16_t)dataValue);
+              //Serial.println((int16_t)dataValue);
               Serial.println("OpenthermReadResponse " + String(messages[i].dataId) + " " + String((int16_t)dataValue));
               break;
             default:
@@ -596,7 +624,7 @@ void writeIdx(int idx, uint16_t v)
     if (response != 0L) {
       SlaveToMasterMsgType responseMsgType = (SlaveToMasterMsgType)((response >> 28) & 0x7);
 
-      Serial.println("ResponseMsgType: " + String(responseMsgType));
+      //Serial.println("ResponseMsgType: " + String(responseMsgType));
 
       if (responseMsgType == DATA_INVALID) {
         Serial.println("DATA_INVALID");
