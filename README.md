@@ -48,7 +48,7 @@ https://www.youtube.com/watch?v=Xk3SmCZ2tsc
 
 ### MCU
 
-I am using Wemos D1 mini with pins for IN:D8; OUT:D7 but it also should work on Arduino or ESP32.
+I am using Wemos D1 mini with pins for IN:D8; OUT:D7 but it also should work on Arduino (Mega) or ESP32.
 
 ### Boiler
 
