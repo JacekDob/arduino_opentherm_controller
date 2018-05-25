@@ -139,11 +139,11 @@ uint32_t timestamp = 0L;
 uint8_t initialized = 0;
 uint8_t loopmessageno = 0;
 
-String CHpressure = " N/A";
-String CHwaterTemp = "  N/A";
-String DHWwaterTemp = "  N/A";
-String OutsideTemp = "  N/A";
-String MaxCHtemp = "  N/A";
+String CHpressure = "N/A ";
+String CHwaterTemp = " N/A ";
+String DHWwaterTemp = " N/A ";
+String OutsideTemp = " N/A ";
+String MaxCHtemp = " N/A";
  
 
 // checks if value has even parity
@@ -406,11 +406,9 @@ void loopSerial()
         Serial.println("Initializing...");
         initialize();
         Serial.println("Initialized.");
-      } if (cmd == "reset" || cmd == "restart") {
-#ifdef ESP32
+      } if (cmd == "reset" || cmd == "restart" || cmd == "rst") {
         Serial.println("Restarting ESP...");
         ESP.restart();
-#endif
       } else if (cmd == "OpenthermRead" || cmd == "r") {
     timestamp = millis();
         readId(id, v);    
