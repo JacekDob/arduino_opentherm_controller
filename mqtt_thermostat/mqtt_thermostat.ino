@@ -187,6 +187,9 @@ void loop(void) {
       op = pid(sp, pv, pv_last, ierr, dt);
       //Set Boiler Temperature
       ot.setBoilerTemperature(op);
+      if (sp < pv - 0.1) {
+        ot.buildRequest(OpenThermRequestType::WRITE, OpenThermMessageID::Status, 0x1);
+      }
     }
     pv_last = pv;
     
