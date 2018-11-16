@@ -5,19 +5,14 @@
 
 #include <OpenTherm.h>
 
+#include "User.h"
+
 //OpenTherm input and output wires connected to 4 and 5 pins on the OpenTherm Shield
-const int inPin = 4;
-const int outPin = 5;
+const int inPin = 15;  //D8
+const int outPin = 13; //D7
 
 //Data wire is connected to 14 pin on the OpenTherm Shield
 #define ONE_WIRE_BUS 14
-
-const char* ssid = "Please specify your WIFI SSID";
-const char* password = "Please specify your WIFI password";
-const char* mqtt_server = "Please specify MQTT server";
-const int   mqtt_port = 00000;
-const char* mqtt_user = "Please specify user";
-const char* mqtt_password = "Please specify password";
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -27,11 +22,19 @@ PubSubClient client(espClient);
 char buf[10];
 
 float sp = 23, //set point
-pv = 0, //current temperature
-pv_last = 0, //prior temperature
-ierr = 0, //integral error
-dt = 0, //time between measurements
-op = 0; //PID controller output
+mt1 = 0,      //remote measured temperature 1
+mt1_last = 0, //prior remote temperature 1
+mt2 = 0,      //remote measured temperature 2
+mt2_last = 0, //prior remote temperature 2
+mt3 = 0,      //remote measured temperature 3
+mt3_last = 0, //prior remote temperature 3
+mt4 = 0,      //remote measured temperature 4
+mt4_last = 0, //prior remote temperature 4
+pv = 0,       //current temperature
+pv_last = 0,  //prior temperature
+ierr = 0,     //integral error
+dt = 0,       //time between measurements
+op = 0;       //PID controller output
 unsigned long ts = 0, new_ts = 0; //timestamp
 
 
@@ -40,7 +43,7 @@ void handleInterrupt() {
 }
 
 float getTemp() {
-  return sensors.getTempCByIndex(0);
+  return sensors.getTempCByIndex(0); 
 }
 
 float pid(float sp, float pv, float pv_last, float& ierr, float dt) {
@@ -123,13 +126,22 @@ void publish_temperature() {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  if(strcmp(topic, "sp") != 0) return;
-  String str = String();    
-  for (int i = 0; i < length; i++) {
-    str += (char)payload[i];
+  if(strcmp(topic, "sp") == 0){
+    String str = String();    
+    for (int i = 0; i < length; i++) {
+      str += (char)payload[i];
+    }
+    Serial.println("sp=" + str);  
+    sp = str.toFloat();
   }
-  Serial.println("sp=" + str);  
-  sp = str.toFloat();
+  if(strcmp(topic, "/ESP01_03_boti/DHT-22/Temperature") == 0){
+    String str = String();    
+    for (int i = 0; i < length; i++) {
+      str += (char)payload[i];
+    }
+    Serial.println("mt1=" + str);  
+    mt1 = str.toFloat();
+  }
 }
 
 void reconnect() {  
@@ -142,6 +154,7 @@ void reconnect() {
       publish_temperature();
       // ... and resubscribe
       client.subscribe("sp");
+      client.subscribe("/ESP01_03_boti/DHT-22/Temperature");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -165,7 +178,9 @@ void loop(void) {
       Serial.println("Error: Invalid boiler response " + String(response, HEX));
     }   
 
-    pv = getTemp();
+//  pv = sensors.getTempCByIndex(0);
+    pv = mt1;
+    
     dt = (new_ts - ts) / 1000.0;
     ts = new_ts;
     if (responseStatus == OpenThermResponseStatus::SUCCESS) {
@@ -175,22 +190,6 @@ void loop(void) {
     }
     pv_last = pv;
     
-	
-	//Get Boiler Temperature
-	float boilertemp = ot.getBoilerTemperature();
-	Serial.println("Boiler temperature is " + String(boilertemp) + " degrees C");	
-
-	
-	Serial.println("Central Heating: " + String(ot.isCentralHeatingEnabled(response) ? "on" : "off"));
-	Serial.println("Hot Water: " + String(ot.isHotWaterEnabled(response) ? "on" : "off"));
-	Serial.println("Flame: " + String(ot.isFlameOn(response) ? "on" : "off"));	
-	
-	//Get Outside Temperature
-	float temperature = ot.getTemperature();
-	Serial.println("Boiler temperature is " + String(temperature) + " degrees C");	
-
-	
-	
     sensors.requestTemperatures(); //async temperature request
     
     publish_temperature();
