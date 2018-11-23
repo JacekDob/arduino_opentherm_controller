@@ -47,7 +47,7 @@ float getTemp() {
 }
 
 float pid(float sp, float pv, float pv_last, float& ierr, float dt) {
-  float Kc = 10.0; // K / %Heater
+  float Kc = 5.0; // K / %Heater
   float tauI = 50.0; // sec
   float tauD = 1.0;  // sec
   // PID coefficients
@@ -55,8 +55,8 @@ float pid(float sp, float pv, float pv_last, float& ierr, float dt) {
   float KI = Kc / tauI;
   float KD = Kc*tauD; 
   // upper and lower bounds on heater level
-  float ophi = 100;
-  float oplo = 0;
+  float ophi = 50;
+  float oplo = 9;
   // calculate the error
   float error = sp - pv;
   // calculate the integral error
@@ -187,7 +187,7 @@ void loop(void) {
       op = pid(sp, pv, pv_last, ierr, dt);
       //Set Boiler Temperature
       ot.setBoilerTemperature(op);
-      if (sp < pv - 0.1) {
+      if (op < 10) {
         ot.buildRequest(OpenThermRequestType::WRITE, OpenThermMessageID::Status, 0x1);
       }
     }
